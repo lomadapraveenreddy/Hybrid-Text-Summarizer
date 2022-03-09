@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.timezone import now as presentTime 
 from django.core.exceptions import ValidationError
-
+from .ml_models import pagerank
 class Article(models.Model):
     text = models.TextField(blank=False)
     summary = models.TextField(blank=True)
@@ -13,7 +13,7 @@ class Article(models.Model):
                 {'text': "Text should not be empty."})
     
     def save(self,**kwargs) -> None:
-        self.summary = 'summary in save'
+        self.summary = pagerank.summarize(self.text)
         return super(Article,self).save()
 
     class Meta:
