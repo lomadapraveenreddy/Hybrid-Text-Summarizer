@@ -174,10 +174,10 @@ def summarize_a_file(filename: str):
     ranked_sentence = sorted(((scores[i],s) for i,s in enumerate(sentences)), reverse=True)    
     
     summarize_text = []
-    for i in range(len(sentences)//4):
-      summarize_text.append("".join(ranked_sentence[i][1]))
+    for i in range(len(sentences)//2):
+      summarize_text.append("\n".join(ranked_sentence[i][1]))
 
-    print("\n\nSummarize Text: \n", ". ".join(summarize_text))
+    print("\n\nSummarize Text: \n", ".\n".join(summarize_text))
    
 if __name__ == '__main__':
     summarize_a_file('input')

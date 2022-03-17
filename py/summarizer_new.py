@@ -1,8 +1,9 @@
 import re
 import nltk
-# from thematic_feature import thematicFeature
-# from stop_words import remove_stop_words
+import numpy as np
+from echen import get_enhanced_matrix
 from nltk.stem import PorterStemmer
+
 from nltk.corpus import stopwords
 porter = PorterStemmer()
 stemmer = nltk.stem.porter.PorterStemmer()
@@ -18,7 +19,7 @@ import collections
 from collections import Counter
 
 WORD = re.compile(r"\w+")
-
+THRESHOLD_TO_SUMMARY =0.5
 
 def get_cosine_score(vec1, vec2):
     intersection = set(vec1.keys()) & set(vec2.keys())
@@ -155,15 +156,48 @@ def summarize_a_file(filename: str):
     print(len(sentences))
     sentences = remove_similar_sentences(sentences)
     print(len(sentences))
-    text_len = len(sentences)
     tokenized_sentences = remove_stop_words(sentences)
     tagged = posTagger(remove_stop_words(sentences))
-    print(tokenized_sentences)
-    print(tagged)
-    most_frequent_word_score= most_frequent_score(tokenized_sentences)
-    print(most_frequent_word_score)
-    print(acronym_score(sentences))
-    print(prefix_suffix_score(sentences))
+    # print(tokenized_sentences)
+    # print(tagged)
+    
+    feature_matrix = []
+    feature_matrix.append(most_frequent_score(tokenized_sentences))
+    
+    feature_matrix.append(proper_noun_score(tagged=tagged))
+    feature_matrix.append(numeric_score(tokenized_sentences=tokenized_sentences))
+    feature_matrix.append(namedEntity(sentences=sentences))
+    feature_matrix.append(sentence_position(sentences=sentences))
+    tsisf_score=tfIsf(tokenized_sentences=tokenized_sentences)
+    feature_matrix.append(tsisf_score)
+    feature_matrix.append(centroid_similarity(sentences=sentences,tfIsf_score=tsisf_score))
+    feature_matrix.append(prefix_suffix_score(sentences=sentences))
+    feature_matrix.append(acronym_score(sentences=sentences))
+    feature_matrix.append(upper_case(sentences=sentences))
+    
+    print("$$$$$$$$$$",feature_matrix)
+    transposed_feature_matrix = np.array(feature_matrix).transpose()
+    print(transposed_feature_matrix)
+    feature_matrix = transposed_feature_matrix
+
+    sentences_score = []
+    for i in range(feature_matrix.shape[0]):
+        sentences_score.append((sum(feature_matrix[i]),i))
+    def sentences_sort_func(e):
+        return e[0]
+    sentences_score.sort(key=sentences_sort_func,reverse=True)
+    final_sentences_and_scores = []
+    for i in range(int(len(sentences)*THRESHOLD_TO_SUMMARY)):
+        final_sentences_and_scores.append(sentences_score[i])
+    def sort_final_sentences_and_scores(e):
+        return e[1]
+    final_sentences_and_scores.sort(key=sort_final_sentences_and_scores)
+    print(final_sentences_and_scores)
+    final_summary = ''
+    for i in range(len(final_sentences_and_scores)):
+        final_summary+= sentences[final_sentences_and_scores[i][1]]+'\n'
+    print(final_summary)
+
 
     ### FEATURE EXTRACTION
     # 1. Most frequent word score
@@ -176,7 +210,7 @@ def most_frequent_score(tokenized_sentences):
     count_of_words=Counter(list_of_words)
     total_words=len(count_of_words)
     most_common_words=count_of_words.most_common(15)
-    print(most_common_words)
+    # print(most_common_words)
     frequent_words=[]
     for data in most_common_words:
       frequent_words.append(data[0])
@@ -214,12 +248,36 @@ def numeric_score(tokenized_sentences):
         scores.append(score/float(len(sentence)))
     return scores       
     # 4. Named entities
-# def namedEntity(sentences):
-#   counts =[]
-#   for sentence in sentences:
-#     count = entitY.ner(sentence)
-#     counts.append(count)
-#   return counts
+def namedEntity(sentences):
+    def extract_entity_names(t):
+        entity_names = []
+
+        if hasattr(t, 'label') and t.label:
+            if t.label() == 'NE':
+                entity_names.append(' '.join([child[0] for child in t]))
+            else:
+                for child in t:
+                    entity_names.extend(extract_entity_names(child))
+
+        return entity_names
+    def ner(sample):
+        sentences = nltk.sent_tokenize(sample)
+        tokenized_sentences = [nltk.word_tokenize(sentence) for sentence in sentences]
+        tagged_sentences = [nltk.pos_tag(sentence) for sentence in tokenized_sentences]
+        chunked_sentences = nltk.ne_chunk_sents(tagged_sentences, binary=True)
+        entity_names = []
+        for tree in chunked_sentences:
+        # Print results per sentence
+        # print extract_entity_names(tree)
+
+            entity_names.extend(extract_entity_names(tree))
+        # print(set(entity_names))
+        return len(entity_names)
+    counts =[]
+    for sentence in sentences:
+        count = ner(sentence)
+        counts.append(count)
+    return counts
 
     # 5. sentence pos   -   cos(senPos/len*(len-senPos)/len) 
 def sentence_position(sentences) :
@@ -269,6 +327,17 @@ def acronym_score(sentences):
        scores.append(len(re.findall(acronymsRegex,sentence)))
     return scores
     # 10. uppercase
+def upper_case(sentences) :
+    upper_case_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    tokensentences = remove_stopwords_without_lower(sentences)
+    scores = []
+    for sentence in tokensentences :
+        score = 0
+        for word in sentence :
+            if word[0] in upper_case_letters :
+                score = score + 1
+        scores.append(1.0*score/len(sentence))
+    return scores
 def remove_stopwords_without_lower(sentences) :
     tokenized_sentences = []
     for sentence in sentences :
@@ -283,17 +352,7 @@ def remove_stopwords_without_lower(sentences) :
         tokenized_sentences.append(tokens)
     return tokenized_sentences
 
-def upper_case(sentences) :
-    upper_case_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    tokensentences = remove_stopwords_without_lower(sentences)
-    scores = []
-    for sentence in tokensentences :
-        score = 0
-        for word in sentence :
-            if word[0] in upper_case_letters :
-                score = score + 1
-        scores.append(1.0*score/len(sentence))
-    return scores
+
 
     
 
