@@ -78,13 +78,13 @@ def split_into_sentences(text):
     sentences = text.split("<stop>")
     sentences = sentences[:-1]
     sentences = [s.strip() for s in sentences]
-    print(sentences)
+    
     return sentences
 
 def remove_similar_sentences(sentences):
   threshold_similarity = 0.5
-  print("Cosine Similarity :")
-  print("Length :",len(sentences))
+  
+  
   l=[]
   for i in range(len(sentences)):
     j=i+1
@@ -95,11 +95,11 @@ def remove_similar_sentences(sentences):
           del(sentences[j])
       else:
         j+=1
-  print("Over ",len(sentences))
+  
   return sentences
 
 
-def summarize(text):
+def summarize(text,size):
     sentences = split_into_sentences(text)
     sentences = remove_similar_sentences(sentences)
     similarity_matrix = []
@@ -115,8 +115,8 @@ def summarize(text):
     ranked_sentence = sorted(((scores[i],s) for i,s in enumerate(sentences)), reverse=True)    
     
     summarize_text = []
-    for i in range(len(sentences)//4):
+    for i in range(int(len(sentences)*size)):
       summarize_text.append("".join(ranked_sentence[i][1]))
 
-    print("\n\nSummarize Text: \n", ". ".join(summarize_text))
+    
     return ". ".join(summarize_text)

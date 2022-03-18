@@ -18,7 +18,6 @@ import collections
 from collections import Counter
 
 WORD = re.compile(r"\w+")
-THRESHOLD_TO_SUMMARY =0.5
 
 def get_cosine_score(vec1, vec2):
     intersection = set(vec1.keys()) & set(vec2.keys())
@@ -117,7 +116,7 @@ def remove_similar_sentences(sentences):
   return sentences
 
 
-def summarize_a_file(text:str):
+def summarize(text:str,size:int):
 
     sentences = split_into_sentences(text)
     print(len(sentences))
@@ -154,7 +153,7 @@ def summarize_a_file(text:str):
         return e[0]
     sentences_score.sort(key=sentences_sort_func,reverse=True)
     final_sentences_and_scores = []
-    for i in range(int(len(sentences)*THRESHOLD_TO_SUMMARY)):
+    for i in range(int(len(sentences)*size)):
         final_sentences_and_scores.append(sentences_score[i])
     def sort_final_sentences_and_scores(e):
         return e[1]
@@ -163,7 +162,8 @@ def summarize_a_file(text:str):
     final_summary = ''
     for i in range(len(final_sentences_and_scores)):
         final_summary+= sentences[final_sentences_and_scores[i][1]]+'\n'
-    print(final_summary)
+
+    return final_summary
 
 
     ### FEATURE EXTRACTION
@@ -318,10 +318,3 @@ def remove_stopwords_without_lower(sentences) :
                     tokens.append(word)
         tokenized_sentences.append(tokens)
     return tokenized_sentences
-
-
-
-    
-
-if __name__ == '__main__':
-    summarize_a_file('input')
