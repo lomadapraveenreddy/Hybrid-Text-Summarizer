@@ -1,6 +1,6 @@
 import json
 import re
-from pagerank import summarize_text
+from rbm import summarize
 def evaluate_f1_score(M_text,H_text):
     M_res = re.sub(r'[^\w\s]', '', M_text)
     M_res = M_res.lower()
@@ -26,7 +26,7 @@ def get_avg_f1_score():
     data=json.load(f)
     f1_scores = []
     for i in range(1):
-        f1_scores.append(evaluate_f1_score(H_text=data[i]['summary'],M_text=summarize_text(data[i]['text'])))
+        f1_scores.append(evaluate_f1_score(H_text=data[i]['summary'],M_text=summarize(data[i]['text'],0.8)))
     print(f1_scores)
 
 if __name__=="__main__":

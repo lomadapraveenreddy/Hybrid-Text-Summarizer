@@ -152,13 +152,7 @@ def remove_similar_sentences(sentences):
   return sentences
 
 
-def summarize_a_file(filename: str):
-    # try:
-    #     file = open(filename, 'r')
-    # except FileNotFoundError:
-    #     print('Error: No file found')
-    #     exit(1)
-    text = text_to_summarize
+def summarize_text(text:str):
     sentences = split_into_sentences(text)
     sentences = remove_similar_sentences(sentences)
     similarity_matrix = []
@@ -174,10 +168,11 @@ def summarize_a_file(filename: str):
     ranked_sentence = sorted(((scores[i],s) for i,s in enumerate(sentences)), reverse=True)    
     
     summarize_text = []
-    for i in range(len(sentences)//2):
+    for i in range(len(sentences)//4):
       summarize_text.append("\n".join(ranked_sentence[i][1]))
 
-    print("\n\nSummarize Text: \n", ".\n".join(summarize_text))
+    return ". ".join(summarize_text)
+    
    
 if __name__ == '__main__':
-    summarize_a_file('input')
+    summarize_text('input')
