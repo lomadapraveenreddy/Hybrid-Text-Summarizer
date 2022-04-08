@@ -161,7 +161,7 @@ def summarize(text:str,size:int):
     print(final_sentences_and_scores)
     final_summary = ''
     for i in range(len(final_sentences_and_scores)):
-        final_summary+= sentences[final_sentences_and_scores[i][1]]+'\n'
+        final_summary+= sentences[final_sentences_and_scores[i][1]]
 
     return final_summary
 
