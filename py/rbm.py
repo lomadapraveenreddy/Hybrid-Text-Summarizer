@@ -116,7 +116,7 @@ def remove_similar_sentences(sentences):
   return sentences
 
 
-def summarize(text:str,size:int):
+def rbm_summarize(text:str,size:int):
 
     sentences = split_into_sentences(text)
     

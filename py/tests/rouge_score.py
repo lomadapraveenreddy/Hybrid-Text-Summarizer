@@ -1,6 +1,7 @@
 import json
 import re
-from rbm import summarize
+from rbm import rbm_summarize
+from abstractive import abs_summarize
 def evaluate_f1_score(M_text,H_text):
     M_res = re.sub(r'[^\w\s]', '', M_text)
     M_res = M_res.lower()
@@ -25,9 +26,10 @@ def get_avg_f1_score():
     f= open("tests/summaries.json")
     data=json.load(f)
     f1_scores = []
-    for i in range(1):
-        f1_scores.append(evaluate_f1_score(H_text=data[i]['summary'],M_text=summarize(data[i]['text'],0.8)))
+    for i in range(len(data)):
+        f1_scores.append(evaluate_f1_score(H_text=data[i]['summary'],M_text=abs_summarize(rbm_summarize(data[i]['text'],0.8),0.6)))
     print(f1_scores)
+    print(sum(f1_scores)/len(f1_scores))
 
 if __name__=="__main__":
     get_avg_f1_score()
