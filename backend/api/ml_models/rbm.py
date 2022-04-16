@@ -1,7 +1,9 @@
 import re
 import nltk
 import numpy as np
+#import pandas as pd
 from nltk.stem import PorterStemmer
+from sklearn.preprocessing import MinMaxScaler
 
 from nltk.corpus import stopwords
 porter = PorterStemmer()
@@ -43,13 +45,11 @@ def remove_stop_words(sentences) :
     tokenized_sentences = []
     for sentence in sentences :
         tokens = []
-        split = sentence.lower().split()
+        split = sentence.split()
         for word in split :
-            if word not in stop :
-                try :
-                    tokens.append(porter.stem(word))
-                except :
-                    tokens.append(word)
+            temp = word
+            if temp.lower() not in stop :    
+                tokens.append(word)
         
         tokenized_sentences.append(tokens)
     return tokenized_sentences
@@ -58,7 +58,7 @@ caps = "([A-Z])"
 prefixRegex = "(Mr|St|Mrs|Ms|Dr)[.]"
 suffixRegex = "(Inc|Ltd|Jr|Sr|Co)"
 starters = "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
-acronymsRegex = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
+acronymsRegex = "([A-Z][.][A-Z][.](?:[A-Z][.])?)|([A-Z]{2,})"
 websites = "[.](com|net|org|io|gov)"
 
 
@@ -94,7 +94,7 @@ def split_into_sentences(text):
     sentences = text.split("<stop>")
     sentences = sentences[:-1]
     sentences = [s.strip() for s in sentences]
-    print(sentences)
+    #print(sentences)
     return sentences
 
 def posTagger(tokenized_sentences) :
@@ -115,23 +115,38 @@ def remove_similar_sentences(sentences):
         j+=1
   return sentences
 
+def remove_white_space(tokenized_sentences):
+    modified_tokenized_setences = []
+    for i in tokenized_sentences:
+        k=[]
+        for j in i:
+            j = j.replace('.','')
+            j = j.replace(',','')
+            k.append(j)
+        modified_tokenized_setences.append(k)
+    return modified_tokenized_setences
+
 
 def summarize(text:str,size:int):
 
     sentences = split_into_sentences(text)
-    print(len(sentences))
-    sentences = remove_similar_sentences(sentences)
-    print(len(sentences))
+    #print(len(sentences))
+    # sentences = remove_similar_sentences(sentences)
+    #print(len(sentences))
     tokenized_sentences = remove_stop_words(sentences)
+    tokenized_sentences = remove_white_space(tokenized_sentences)
     tagged = posTagger(remove_stop_words(sentences))
-    # print(tokenized_sentences)
-    # print(tagged)
+    
+    print(tokenized_sentences)
+    print(tagged)
     
     feature_matrix = []
     feature_matrix.append(most_frequent_score(tokenized_sentences))
     
     feature_matrix.append(proper_noun_score(tagged=tagged))
     feature_matrix.append(numeric_score(tokenized_sentences=tokenized_sentences))
+    print(tokenized_sentences)
+    print(numeric_score(tokenized_sentences=tokenized_sentences))
     feature_matrix.append(namedEntity(sentences=sentences))
     feature_matrix.append(sentence_position(sentences=sentences))
     tsisf_score=tfIsf(tokenized_sentences=tokenized_sentences)
@@ -141,10 +156,14 @@ def summarize(text:str,size:int):
     feature_matrix.append(acronym_score(sentences=sentences))
     feature_matrix.append(upper_case(sentences=sentences))
     
-    print("$$$$$$$$$$",feature_matrix)
+    #print("$$$$$$$$$$",feature_matrix)
     transposed_feature_matrix = np.array(feature_matrix).transpose()
     print(transposed_feature_matrix)
-    feature_matrix = transposed_feature_matrix
+    scaler=MinMaxScaler()
+    #pd.DataFrame(transposed_feature_matrix)
+    scaled = scaler.fit_transform(transposed_feature_matrix)
+    print(scaled)
+    feature_matrix = scaled
 
     sentences_score = []
     for i in range(feature_matrix.shape[0]):
@@ -161,7 +180,7 @@ def summarize(text:str,size:int):
     print(final_sentences_and_scores)
     final_summary = ''
     for i in range(len(final_sentences_and_scores)):
-        final_summary+= sentences[final_sentences_and_scores[i][1]]+'\n'
+        final_summary+= sentences[final_sentences_and_scores[i][1]]
 
     return final_summary
 
