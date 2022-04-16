@@ -23,7 +23,7 @@ def evaluate_f1_score(M_text,H_text):
 
 
 def get_avg_f1_score():
-    f= open("tests/summaries.json")
+    f= open("tests/summary.json")
     data=json.load(f)
     f1_scores = []
     for i in range(len(data)):
